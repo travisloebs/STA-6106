@@ -2,7 +2,7 @@
 title: "STA6106 Project 1"
 author: "Travis Loebs"
 date: "October 2, 2016"
-output: html_document
+output: word_document
 sansfont: Times New Roman
 fontsize: 12pt
 ---
@@ -38,7 +38,7 @@ K = 2 \times
 0 & 0 & -1
 \end{bmatrix},
 \;
-C = 
+C' = 
 \begin{bmatrix}
 20 & 16 & 0
 \end{bmatrix},
@@ -64,11 +64,24 @@ d =
 \end{bmatrix}
 $$
 
+&nbsp;
+
 1.2 This problem can be solved in R using the quadprog library. However, because the quadprog library solves functions of the form
 
 $$\min_b \frac{1}{2} b' D b - d'b \qquad s.t. \quad A'b \geq b_0$$
 
-we must turn our maximization problem into a minimization problem by multiplying the objective and constraint functions by -1. First, we load the library and create our matrices at outlined in problem 1.1, except all of the matrices are multiplied by -1.
+we must turn our maximization problem into a minimization problem by multiplying the objective and constraint functions by -1. First, we load the library and create our matrices at outlined in problem 1.1, except all of the matrices are multiplied by -1 with the exception of $C$, because 'quadprog' by default makes $C$ negative. Additionally, the constraint matrix $A$ must be modified for use with the 'quadprog' library by putting the equality constraint in the first row, such that
+
+$$A = 
+\begin{bmatrix}
+1 & 1 & -1 \\
+1 & 1 & 0 \\
+-1 & 0 & 0 \\
+0 & -1 & 0 \\
+0 & 0 & -1
+\end{bmatrix}$$
+
+and setting the 'meq' parameter equal to one, so that 'solve.QP' recognizes this constraint as an equality constraint.
 
 ```{r comment=NA, message=FALSE, warning=FALSE}
 library(quadprog)
@@ -101,6 +114,8 @@ Problem 2
 $$\mathcal{L}(x, \lambda) = x_1^2 + 2 x_2^2 + 2 x_1 + 8 x_2 
 + \lambda_1 [-x_1 - 2 x_2 + 10] - \lambda_2 x_1 - \lambda_3 x_2$$
 
+&nbsp;
+
 2.2 To find the dual problem, we first differentiate the Lagrangian with respect to $x$
 
 $$\nabla_x \mathcal{L}(x, \lambda) = \langle
@@ -119,17 +134,25 @@ $$
 $$+ \lambda_1 \Big[ -{\frac{\lambda_1 + \lambda_2 - 2}{2}} - 2 {\frac{2 \lambda_1 + \lambda_3 - 8}{4}} + 10 \Big] - \lambda_2 {\frac{\lambda_1 + \lambda_2 - 2}{2}} - \lambda_3 {\frac{2 \lambda_1 + \lambda_3 - 8}{4}}$$
 $$= 15 \lambda_1 + \lambda_2 + 2 \lambda_3 - \frac{3}{4}\lambda_1^2 - \frac{1}{2}\lambda_1 \lambda_2 - \frac{1}{2}\lambda_1 \lambda_3 - \frac{1}{2}\lambda_2^2 - \frac{1}{8}\lambda_3^2 - 9$$
 
+&nbsp;
+
 2.3 The Karush-Kuhn-Tucker (KKT) conditions are given by:
-$$ \lambda_1 \geq 0, \; \lambda_2 \geq 0, \; \lambda_3 \geq 0$$
-$$ -x_1 - 2 x_2 + 10 \leq 0$$
-$$ -x_1 \leq 0, \; -x_2 \leq 0$$
-$$\lambda_1 [-x_1 - 2 x_2 + 10] = 0$$
-$$- \lambda_2 x_1 = 0$$
-$$- \lambda_3 x_2 = 0$$
+$$ \lambda_1^* \geq 0, \; \lambda_2^* \geq 0, \; \lambda_3^* \geq 0$$
+$$ -x_1^* - 2 x_2^* + 10 \leq 0$$
+$$ -x_1^* \leq 0, \; -x_2^* \leq 0$$
+$$\lambda_1^* [-x_1^* - 2 x_2^* + 10] = 0$$
+$$- \lambda_2^* x_1^* = 0$$
+$$- \lambda_3^* x_2^* = 0$$
+$$\frac{\partial \mathcal{L}}{\partial x_1^*} = 2 x_1^* + 2 - \lambda_1^* - \lambda_2^* = 0$$
+$$\frac{\partial \mathcal{L}}{\partial x_2^*} = 4 x_2^* + 8 - 2 \lambda_1^* - \lambda_3^* = 0$$
 
-2.4 Who knows
+&nbsp;
 
-2.5 We can use a stochastic hill climb algorithm to solve the dual problem. This is because the Hessian of the dual problem is negative definite, that is, all of its eigenvalues are negative. This is verified by finding the Hessian matrix, H:
+2.4 Let $x_1^* = 4$ and $\; x_2^* = 3$ be the solutions to the primal problem, and $\; \lambda_1^* = 10$, $\; \lambda_2^* = 0$, and $\; \lambda_3^* = 0$ be the solutions to the dual problem. Then all of the KKT optimality conditions hold, and $p^* = d^* = 66$, where $p^* = f_0(x^*)$ and $d^* = g(\lambda^*)$. Thus, strong duality holds because the duality gap is zero.
+
+&nbsp;
+
+2.5 We can use a stochastic hill climb algorithm to solve the dual problem. This is because the Hessian of $K$ in the dual problem is negative semi-definite, that is, all of its eigenvalues are negative or zero. This is verified by finding the Hessian matrix, H:
 
 $$H = 
 \begin{bmatrix}
@@ -142,49 +165,82 @@ $$H =
 \quad
 \begin{bmatrix}
 -\frac{3}{2} & -\frac{1}{2} & -\frac{1}{2} \\
--\frac{1}{2} & -1 & 0 \\
+-\frac{1}{2} & -\frac{1}{4} & 0 \\
 -\frac{1}{2} & 0 & -\frac{1}{4}
 \end{bmatrix}$$
 And then finding the eigenvalues of the Hessian matrix
 
-```{r}
-#H <- matrix(c(2,0,0,4), nrow=2, ncol=2)
-H <- matrix(c(-3/2, -1/2, -1/2, -1/2, -1, 0, -1/2, 0, -1/4), nrow=3, ncol=3)
+```{r comment=NA, message=FALSE, warning=FALSE}
+H <- matrix(c(-3/2, -1/2, -1/2, -1/2, -1/2, 0, -1/2, 0, -1/4), nrow=3, ncol=3)
 eigH <- eigen(H)$values
-eigH
+round(eigH, 4)
 ```
 
-Which are all less than zero. Now, because the function is strictly concave, any local maximimum is a global maximum, and a stochastic hill climb algorithm can be used to find the maximum. This is done by starting with arbitrary ordered points ($\lambda_1$, $\lambda_2$, $\lambda_3$) under the constraints $\lambda_1 \geq 0, \; \lambda_2 \geq 0, \; \lambda_3 \geq 0$ given in the KKT conditions. Then, a neighboring set of ordered points is randomly selected and is only accepted if it improves (increases) the objective function evaluated at those points. This process is iterated many times until the set of ordered points doesn't change to any of it's neighboring points, i.e. the maximum is found.
+Which are all negative or zero. Now, because the function is concave, any local maximimum is a global maximum, and a stochastic hill climb algorithm can be used to find the maximum. This is done by starting with arbitrary ordered points ($\lambda_1$, $\lambda_2$, $\lambda_3$) under the constraints $\lambda_1 \geq 0, \; \lambda_2 \geq 0, \; \lambda_3 \geq 0$ given in the KKT conditions. Then, a neighboring set of ordered points is randomly selected and is only accepted if it improves (increases) the objective function evaluated at those points. This process is iterated many times until the set of ordered points doesn't change to any of it's neighboring points, i.e. the maximum is found.
 
 This algorithm is implemented in C++, with the code and comments on the following page. The algorithm converged to $\lambda_1 = 10$, $\lambda_2 = 0$, and $\lambda_3 = 0$.
 
-```{r}
+&nbsp;
+
+2.6 With the dual problem solved, we can plug our optimal values obtained from solving the dual problem, $\lambda^*$, into the primal problem to find the solution. So, we plug $\lambda_1^* = 10$, $\lambda_2^* = 0$, and $\lambda_3^* = 0$ into 
+
+$$x_1^* = {\frac{\lambda_1^* + \lambda_2^* - 2}{2}} \; , \quad
+x_2^* = {\frac{2 \lambda_1^* + \lambda_3^* - 8}{4}}$$
+
+to get $x_1^* = 4$ and $x_2^* = 3$.
+
+This result is verified by using the 'quadprog' function in R. In 'quadprog's matrix form, the primal problem is
+
+$$\min_b \frac{1}{2} x' K x - C'x \qquad s.t. \quad A'x \geq d$$
+
+where 
+
+$$x = 
+\begin{bmatrix}
+x_1 \\
+x_2 \\
+x_3
+\end{bmatrix},
+\;
+K = 2 \times
+\begin{bmatrix}
+1 & 0 \\
+0 & 2
+\end{bmatrix},
+\;
+C' = -1 \times
+\begin{bmatrix}
+2 & 8
+\end{bmatrix},
+\;
+A = 
+\begin{bmatrix}
+1 & 2 \\
+1 & 0 \\
+0 & 1
+\end{bmatrix},
+\;
+d = 
+\begin{bmatrix}
+10 \\
+0 \\
+0
+\end{bmatrix}
+$$
+
+Implementing this in R, we get the following result:
+
+```{r comment=NA, message=FALSE, warning=FALSE}
 library(quadprog)
-K = 2*diag (c (-1, -2));
-C = c(2, 8)
+K = 2*diag (c (1, 2));
+C = -1.*c(2, 8)
 A = matrix (0, nrow=3, ncol=2)
 A[1,] = c(1, 2)
-A[2,] = c(-1, 0)
-A[3,] = c(0, -1)
-d = c(-10, 0, 0)
-#xHat = solve.QP(K, C, t(A), d, meq=0)$solution
-#xHat
+A[2,] = c(1, 0)
+A[3,] = c(0, 1)
+d = c(10, 0, 0)
+xHat = solve.QP(K, C, t(A), d, meq=0)$solution
+xHat
 ```
 
-```{r}
-library(quadprog)
-K = matrix(0, nrow=3, ncol=3)
-K[1,] = -2*c(3/4, -1/4, -1/4)
-K[2,] = -2*c(-1/4, -1/2, 0)
-K[3,] = -2*c(-1/4, 0, -1/8)
-C = c(15, 1, 2)
-A = matrix (0, nrow=3, ncol=3)
-A[1,] = c(1, 0, 0)
-A[2,] = c(0, 1, 0)
-A[3,] = c(0, 0, 1)
-d = c(0, 0, 0)
-#xHat = solve.QP(K, C, t(A), d, meq=0)$solution
-#xHat
-#awesome!!!
-```
-
+This confirms that $x_1^* = 4$ and $x_2^* = 3$.
