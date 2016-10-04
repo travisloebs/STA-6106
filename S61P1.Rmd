@@ -127,7 +127,37 @@ $$\lambda_1 [-x_1 - 2 x_2 + 10] = 0$$
 $$- \lambda_2 x_1 = 0$$
 $$- \lambda_3 x_2 = 0$$
 
-2.4 
+2.4 Who knows
+
+2.5 We can use a stochastic hill climb algorithm to solve the dual problem. This is because the Hessian of the dual problem is negative definite, that is, all of its eigenvalues are negative. This is verified by finding the Hessian matrix, H:
+
+$$H = 
+\begin{bmatrix}
+\frac{{\partial}^2 g}{\partial {\lambda_1}^2} & \frac{{\partial}^2 g}{\partial {\lambda_1}\lambda_2} & \frac{{\partial}^2 g}{\partial {\lambda_1}\lambda_3} \\
+\frac{{\partial}^2 g}{\partial {\lambda_1}\lambda_2} & \frac{{\partial}^2 g}{\partial {\lambda_2}^2} & \frac{{\partial}^2 g}{\partial {\lambda_2}\lambda_3} \\
+\frac{{\partial}^2 g}{\partial {\lambda_1}\lambda_3} & \frac{{\partial}^2 g}{\partial {\lambda_2}\lambda_3} & \frac{{\partial}^2 g}{\partial {\lambda_3}^2}
+\end{bmatrix}
+\quad
+=
+\quad
+\begin{bmatrix}
+-\frac{3}{2} & -\frac{1}{2} & -\frac{1}{2} \\
+-\frac{1}{2} & -1 & 0 \\
+-\frac{1}{2} & 0 & -\frac{1}{4}
+\end{bmatrix}$$
+And then finding the eigenvalues of the Hessian matrix
+
+```{r}
+#H <- matrix(c(2,0,0,4), nrow=2, ncol=2)
+H <- matrix(c(-3/2, -1/2, -1/2, -1/2, -1, 0, -1/2, 0, -1/4), nrow=3, ncol=3)
+eigH <- eigen(H)$values
+eigH
+```
+
+Which are all less than zero. Now, because the function is strictly concave, any local maximimum is a global maximum, and a stochastic hill climb algorithm can be used to find the maximum. This is done by starting with arbitrary ordered points ($\lambda_1$, $\lambda_2$, $\lambda_3$) under the constraints $\lambda_1 \geq 0, \; \lambda_2 \geq 0, \; \lambda_3 \geq 0$ given in the KKT conditions. Then, a neighboring set of ordered points is randomly selected and is only accepted if it improves (increases) the objective function evaluated at those points. This process is iterated many times until the set of ordered points doesn't change to any of it's neighboring points, i.e. the maximum is found.
+
+This algorithm is implemented in C++, with the code and comments on the following page. The algorithm converged to $\lambda_1 = 10$, $\lambda_2 = 0$, and $\lambda_3 = 0$.
+
 ```{r}
 library(quadprog)
 K = 2*diag (c (-1, -2));
@@ -155,5 +185,6 @@ A[3,] = c(0, 0, 1)
 d = c(0, 0, 0)
 #xHat = solve.QP(K, C, t(A), d, meq=0)$solution
 #xHat
+#awesome!!!
 ```
 
