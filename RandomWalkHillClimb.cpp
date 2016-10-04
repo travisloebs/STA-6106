@@ -1,7 +1,6 @@
 // ConsoleApplication9.cpp : Defines the entry point for the console application.
 //
 
-#include "stdafx.h"
 #include <random>
 #include <iostream>
 using namespace std;
@@ -11,7 +10,7 @@ void randomWalk(const int n, double & lam1, double & lam2, double & lam3,
 double objectiveFunc(const double lam1, const double lam2, const double lam3);
 
 
-int _tmain(int argc, _TCHAR* argv[])
+int main()
 {
 	const int n = 1000000;
 	random_device rd;
