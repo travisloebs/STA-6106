@@ -66,11 +66,88 @@ $$
 
 &nbsp;
 
-1.2 This problem can be solved in R using the quadprog library. However, because the quadprog library solves functions of the form
+1.2 This problem can be solved in R using the quadprog library. First, let's show that the problem is concave and be transformed into a convex function. First, note that the Hessian matrix for this problem is 
+
+$$H = 
+\begin{bmatrix}
+-2 & 0 & 0 \\
+0 & -1 & 0 \\
+0 & 0 & -1
+\end{bmatrix}$$
+
+Then, we show that the Hessian is negative definite on the support of $x$ by checking that the eigenvalues are less than zero.
+
+
+```{r comment=NA, message=FALSE, warning=FALSE}
+H <- matrix(c(-2, 0, 0, 0, -1, 0, 0, 0, -1), nrow=3, ncol=3)
+eigen(H)$values
+```
+
+Because the eigenvalues are all less than zero, this is a strictly concave function. We can easily change the objective and constraint functions to convex functions by multiplying each function by -1, causing the Hessian to change to 
+
+$$H = 
+\begin{bmatrix}
+2 & 0 & 0 \\
+0 & 1 & 0 \\
+0 & 0 & 1
+\end{bmatrix}$$
+
+Next we check the eigenvalues of this matrix
+
+```{r comment=NA, message=FALSE, warning=FALSE}
+H <- matrix(c(2, 0, 0, 0, 1, 0, 0, 0, 1), nrow=3, ncol=3)
+eigen(H)$values
+```
+
+Because the eigenvalues are all positive over the domain of $x$, this problem is now a convex problem. Now, because the quadprog library solves functions of the form
 
 $$\min_b \frac{1}{2} b' D b - d'b \qquad s.t. \quad A'b \geq b_0$$
 
-we must turn our maximization problem into a minimization problem by multiplying the objective and constraint functions by -1. First, we load the library and create our matrices at outlined in problem 1.1, except all of the matrices are multiplied by -1 with the exception of $C$, because 'quadprog' by default makes $C$ negative. Additionally, the constraint matrix $A$ must be modified for use with the 'quadprog' library by putting the equality constraint in the first row, such that
+we must state our minimization problem in this form. 
+
+$$x = 
+\begin{bmatrix}
+x_1 \\
+x_2 \\
+x_3
+\end{bmatrix},
+\;
+K = 2 \times
+\begin{bmatrix}
+2 & 0 & 0 \\
+0 & 1 & 0 \\
+0 & 0 & 1
+\end{bmatrix},
+\;
+C = 
+\begin{bmatrix}
+20 \\
+16 \\
+0
+\end{bmatrix},
+\;
+A = 
+\begin{bmatrix}
+-1 & -1 & 0 \\
+-1 & -1 & 1 \\
+1 & 1 & -1 \\
+1 & 0 & 0 \\
+0 & 1 & 0 \\
+0 & 0 & 1
+\end{bmatrix},
+\;
+d = 
+\begin{bmatrix}
+-5 \\
+0 \\
+0 \\
+0 \\
+0 \\
+0 \\
+\end{bmatrix}
+$$
+
+First, we load the library and create our matrices at outlined above. Additionally, the constraint matrix $A$ must be modified for use with the 'quadprog' library by putting the equality constraint in the first row, such that
 
 $$A = 
 \begin{bmatrix}

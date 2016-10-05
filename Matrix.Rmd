@@ -1,0 +1,106 @@
+---
+title: "Should change the name"
+author: "Me"
+date: "Thursday, September 22, 2016"
+output: word_document
+---
+
+```{r}
+A <- matrix(c(2, 0,1,-1,1,-1,1,-1,1,-1,2,0,2,0,0,-2), nrow=4, ncol=4, byrow=TRUE)
+B <- matrix(c(.5,.5,-.5,0,.5,-1.5,.5,0,0,-1,1,0,0,0,0,0), nrow=4, ncol=4, byrow=TRUE)
+C <- matrix(c(1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,0), nrow=4, ncol=4, byrow=TRUE)
+B %*% A
+B %*% A %*% C
+```
+
+```{r}
+D <- matrix(c(3,0,0,-2), nrow=2, ncol=2, byrow=TRUE)
+x <- matrix(c(0,2), nrow=2, ncol=1, byrow=TRUE)
+t(x) %*% D %*% x
+```
+
+```{r}
+B <- matrix(c(sqrt(19/4),.5,0,2), nrow=2, ncol=2, byrow=TRUE)
+B %*% t(B)
+```
+
+```{r}
+X <- read.table("C:\\Users\\Bear\\Downloads\\eurojobs.txt", header=FALSE)
+X <- X[,-1]
+X <- X[,c(3, 6, 8)]
+X <- as.matrix(X)
+mu <- colMeans(X); mu
+sigma <- cov(X); sigma
+totvar <- sum(diag(sigma)); totvar
+eig <- eigen(sigma); eig
+vary <- eig$values; vary
+cumvary <- cumsum(vary); cumvary
+cumpct <- cumvary / totvar; cumpct # use first two PCs because they account for 90% of variation
+evec <- eig$vectors; evec
+e1 <- evec[, 1]; e1
+e2 <- evec[,2]; e2
+e3 <- evec[, 3]; e3
+lam1 <- vary[1]; lam2 <- vary[2]; lam3 <- vary[3]
+cor1 <- e1*(sqrt(lam1)/sqrt(diag(sigma))); cor1
+cor2 <- e2 * (sqrt(lam2)/sqrt(diag(sigma))); cor2
+n <- nrow(X); n
+mn <- matrix(rep(mu, n), n, byrow=TRUE); mn
+mx <- X - mn; mx
+#Z <- diag(sqrt(diag(sigma))) %*% mx; Z
+x1 <- mx[1,]; y1 <- t(x1) %*% e1; y1
+b <- mx %*% evec; b
+europca <- princomp(X)
+summary(europca)
+epc <- prcomp(X); epc
+```
+
+```{r}
+X <- read.table("C:\\Users\\Bear\\Downloads\\eurojobs.txt", header=FALSE)
+X <- X[,-1]
+X <- as.matrix(X)
+s <- cor(X); s
+totvars <- sum(diag(s)); totvars
+eigs <- eigen(s)
+varys <- eigs$values; varys
+sds <- sqrt(varys); sds
+cumvarys <- cumsum(varys); cumvarys
+pcts <- varys/totvars; pcts
+cumpcts <- cumvarys / totvars; cumpcts
+res <- round(rbind(sds, pcts, cumpcts), 4); res
+europcar <- princomp(X, cor=TRUE)
+summary(europcar)
+ind <- 1:9
+plot(ind, varys, type="b", main="Scree Plot")
+a <- europcar$scores; a
+epc <- prcomp(X, scale=T)
+epc$x
+xn <- scale(X)
+mus <- colMeans(xn); mus
+mns <- matrix(rep(mus, n), n, byrow=TRUE); mns
+mxs <- xn - mns; mxs
+evecs <- eigs$vectors; round(evecs, 4)
+e1s <- evecs[, 1]; e1s
+x1s <- mxs[1, ]; y1s <- t(x1s) %*% e1s; y1s
+bs <- mxs %*% evecs; bs
+library(Rcpp)
+Rcpp::sourceCpp
+timesTwo(10)
+```
+
+
+```{r}
+#k <- matrix(c(2, 0, 0, 4), nrow=2)
+#eigen(k)$values
+
+library(quadprog)
+K = -2*matrix(c(-3/4, -1/4, -1/4, -1/4, -1/4, -0, -1/4, -0, -1/8), nrow=3, ncol=3);
+C = c(15, 1, 2)
+A = matrix (0, nrow=3, ncol=3)
+A[1,] = c(1, 0, 0)
+A[2,] = c(0, 1, 0)
+A[3,] = c(0, 0, 1)
+d = c(0, 0, 0)
+xHat = solve.QP(nearPD(K)$mat, C, t(A), d, meq=0)$solution
+xHat
+```
+
